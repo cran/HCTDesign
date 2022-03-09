@@ -1,0 +1,206 @@
+# Helper function
+fx1DE<-function(x,ub,covm,tprob){#fx1 for solving lower bound#
+  kn=length(ub)
+  lb=rep(-Inf,kn)
+  pmv=mvtnorm::pmvnorm(lower=c(lb,x),upper=c(ub,Inf),sigma=covm)[1]
+  tprob-pmv}
+
+
+# Helper function
+findboundDE<-function(d2,d1,alpha,beta,k,option,param){
+  ti<-k
+  eta0=qnorm(1-alpha)+qnorm(1-beta)
+  eta1=sqrt(2)*eta0
+  etam=(eta0+eta1)/2
+  R=d2/d1
+  alpha1=beta1=NULL
+  alpha1[1]=beta1[1]=0
+  ts=NULL
+  if(option=="OBF"){
+    for (i in 1:length(ti)) {
+      ts[i]=(1+R)*ti[i]/(1+R*ti[i])
+      alpha1[i+1]=2-2*pnorm(qnorm(1-alpha/2)/sqrt(ts[i]))
+      #beta1[i+1]=2-2*pnorm(qnorm(1-beta/2)/sqrt(ts[i]))}
+      }}
+  if(option=="Gamma"){
+    gamma=-(param)
+    for (i in 1:length(ti)) {
+      ts[i]=(1+R)*ti[i]/(1+R*ti[i])
+      alpha1[i+1]=alpha*(1-exp(gamma*(ts[i])))/(1-exp(gamma))
+      #beta1[i+1]=beta*(1-exp(gamma*(ts[i])))/(1-exp(gamma))
+      }
+      }
+  if(option=="Rho"){
+    rho=param
+    for (i in 1:length(ti)) {
+      ts[i]=(1+R)*ti[i]/(1+R*ti[i])
+      alpha1[i+1]=alpha*(ts[i])^rho
+    # beta1[i+1]=beta*(ts[i])^rho
+      }
+    }
+  if(option=="Pocock"){
+    for (i in 1:length(ti)) {
+      ts[i]=(1+R)*ti[i]/(1+R*ti[i])
+      alpha1[i+1]=alpha*log(1+(exp(1)-1)*ts[i])
+      #beta1[i+1]=beta*log(1+(exp(1)-1)*ts[i])
+      }}
+
+  covmatrix=matrix(rep(0,(length(ti)+1)*(length(ti)+1)),ncol=length(ti)+1,byrow=T)
+  tij=c(0, ts)
+  for (i in 1:(length(ti)+1)) {
+    for (j in 1:(length(ti)+1)) {
+      covmatrix[i,j]=min(tij[i],tij[j])/sqrt(tij[i]*tij[j])}}
+  ub=lb=rep(0,length(ti))
+  ub[1]=qnorm(1-alpha1[2])
+  ubi=NULL
+  for (i in c(2:length(ti))){
+    ubi=c(ubi,ub[i-1])
+    ub[i]=uniroot(fx1DE,lower=-10,upper=10,ub=ubi,
+                  covm=covmatrix[2:(i+1),2:(i+1)],tprob=alpha1[i+1]-alpha1[i])$root}
+  ctn=0
+  flag2=0 #flag for convergence
+  repeat{
+    ctn=ctn+1
+    flag=0 #flag for lb>ub
+    etam=(eta0+eta1)/2
+    betaK<-mvtnorm::pmvnorm(lower = c(rep(-Inf,length(ub))),upper = c(ub),mean = etam*sqrt(ts[1:(length(ti))]),sigma = covmatrix[2:(length(ti)+1),2:(length(ti)+1)])[1]
+    if (betaK<beta) {eta1=etam} else {eta0=etam}
+    if (abs(beta-betaK)<1e-05) {flag2=1} else{print(abs(beta-betaK)<1e-05)}
+    if(flag2==1) {break}
+  }
+  ans=list(lower=ub[length(ub)],upper=ub,etam=round(etam,4), ts=round(ts,4),flag,
+           flag2,alpha=alpha1[2:length(alpha1)],beta=beta,sig=covmatrix)
+  return(ans)
+}
+#############################################
+#############################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#' @title HCT design with interim monitoring for efficacy only
+#' @description The group sequential design for historical controlled survival outcome trials with efficacy boundaries only.
+#' @param k vector of time fraction for all planned looks: k=c(1/3,2/3,1) if the three planned looks will be carried out at 1/3, 2/3 and all of the total events in the experiment arm.
+#' @param alpha type I error.
+#' @param beta type II error.
+#' @param delta hazard ratio: hazard of experiment group over hazard of control group.
+#' @param d1 total number of events in the historical control group.
+#' @param option type of spending function: "OBF", "Gamma", "Rho" or "Pocock". Default is "OBF.
+#' @param param Parameter for Gamma family or Rho family. Default value is 4.
+#' @author Tushar Patni, Yimei Li, Jianrong Wu, and Arzu Onar-Thomas.
+#' @return List of dataframes and vectors containing the details about the following: design of the trial which includes the number of looks and events;
+#' details about futility and efficacy boundaries which include transformed information time at each look, cumulative beta and alpha respectively, p-values and crossing probabilities;
+#' etam(drift parameter); d2max(maximum number of events in the experimental group); delta_used(hazard ratio used in the design).
+#' @examples
+#' #HCT trial design with three equally spaced looks for efficacy only using OBF spending function.
+#' gg<-EffDesign(k=c(0.33333,0.66667,1),alpha=0.05,beta=0.1,delta=1/1.75,d1=65,option="OBF")
+#' #HCT trial design with three unequal spaced looks using Gamma spending function with parameter -1.
+#' gg<-EffDesign(k=c(0.5,0.75,1),alpha=0.05,beta=0.1,delta=0.5,d1=23, option="Gamma", param=1)
+#' @import stats
+#' @references
+#' \insertRef{doi:10.1002/pst.1756}{HCTDesign}
+#' @references
+#' \insertRef{doi:10.1080/10543406.2019.1684305}{HCTDesign}
+#' @importFrom Rdpack reprompt
+#' @importFrom diversitree set.defaults
+#' @export
+
+
+ EffDesign<-function(k, alpha, beta, delta, d1, option,param){
+  while(d1>0) {
+    temp1=exp(sqrt(1/d1*(qnorm(1-alpha)+qnorm(1-beta))^2))
+    temp2=exp(-sqrt(1/d1*(qnorm(1-alpha)+qnorm(1-beta))^2))
+    if (delta<temp1 & delta>temp2) {
+      delta<-ifelse(floor(delta)==1,temp1+0.001,temp2-0.001)
+    }
+
+    d2start=ceiling((log(delta)^2/(qnorm(1-alpha)+qnorm(1-beta))^2-1/d1)^(-1))
+    if(d2start<0 & delta==ifelse(floor(delta)==1,temp1,temp2)){
+      delta<-ifelse(floor(delta)==1,delta+0.001,delta-0.001)
+      d2start=ceiling((log(delta)^2/(qnorm(1-alpha)+qnorm(1-beta))^2-1/d1)^(-1))}
+    find=findboundDE(d2=d2start,d1=d1,alpha=alpha, beta=beta,k=k,
+                   option=option,param=param)
+    etam=find$etam
+    temp1=round(exp(sqrt(1/d1*(etam)^2)),3)
+    temp2=round(exp(-sqrt(1/d1*(etam)^2)),3)
+    if (delta<temp1 & delta>temp2) {
+      delta<-ifelse(floor(delta)==1,temp1+0.001,temp2-0.001)
+    }
+    ctn=0
+    conv<-0
+    repeat{
+      ctn=ctn+1
+      d2=ceiling(1/(log(delta)^2/etam^2-1/d1))
+      if(d2<0 & delta==ifelse(floor(delta)==1,temp1,temp2)){
+        delta<-ifelse(floor(delta)==1,delta+0.001,delta-0.001)
+        d2=ceiling(1/(log(delta)^2/etam^2-1/d1))}
+      find=findboundDE(d2=d2,d1=d1,alpha=alpha, beta=beta,k=k,option=option,param=param)
+      etam=find$etam
+      temp1=round(exp(sqrt(1/d1*(etam)^2)),3)
+      temp2=round(exp(-sqrt(1/d1*(etam)^2)),3)
+      if (delta<temp1 & delta>temp2) {
+        delta<-ifelse(floor(delta)==1,temp1+0.001,temp2-0.001)
+      }
+      lb=find$lower
+      ub=find$upper
+      ts=find$ts
+      if(ctn==1){
+        q=d2
+      }
+      if(d2==q){
+        conv<-conv+1
+      }
+      else{
+        q<-d2
+      }
+      if (conv>5){break}
+      if (ctn>50) {break}}
+    if (conv>5){break}
+    else {delta<-ifelse(floor(delta)==1,delta+0.01,delta-0.01)}
+  }
+  lb=round(lb,3)
+  ub=round(ub,3)
+  p1<-NULL
+  p2<-NULL
+  p1[1]<-pnorm(ub[1],lower.tail = F)
+  p2<-pnorm(lb[1],mean = etam*sqrt(ts[length(ts)]))
+  for (i in 2:length(ub)){
+    p1[i]<-mvtnorm::pmvnorm(lower=c(rep(-Inf,length(lb[1:(i-1)])),ub[i]),upper=c(ub[1:(i-1)],Inf),sigma=find$sig[2:(i+1),2:(i+1)])[1]
+    #p2[i]<-mvtnorm::pmvnorm(lower=c(lb[1:i-1],-Inf),upper=c(ub[1:i-1],lb[i]),sigma=find$sig[2:(i+1),2:(i+1)],mean = etam*sqrt(ts[1:i]))[1]
+  }
+  k1<-NULL
+  k2<-pnorm(lb,lower.tail = F)
+  for (i in 1:length(ub)){
+    k1[i]<-pnorm(ub[i],lower.tail = F)
+    #k2[i]<-pnorm(lb[i],lower.tail = F)
+  }
+
+  ans=list(Design=data.frame(Looks=1:length(ts),Events=round(d2*k)),Efficacy=data.frame("Information time"=round(ts,4),"Cumulative alpha spent"=find$alpha,"Efficacy boundary in z-score scale"=ub,
+                                                                                        "Efficacy boundary in p-value scale"=k1,"Boundary crossing probability"=p1,check.names = F),
+           Futility=data.frame("Information time"=round(ts[length(ts)],4),
+                               "Cumulative beta spent"=find$beta,"Futility boundary in z-score scale"=lb, "Futility boundary in p-value scale"=k2,"Boundary crossing probability"=p2,check.names = F),etam=etam,d2max=d2,delta_used=delta)
+
+  return(ans)}
+
+EffDesign<-set.defaults(EffDesign,option="OBF",param=4)
+#################################################################
+
+
+
+
+
+
+
+
+
