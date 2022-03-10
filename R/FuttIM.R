@@ -93,7 +93,7 @@ FutIM<-function(d2,dmax,last.look,d1,etam,alpha,beta,opt,param){
           beta1[i+1]=2-2*pnorm(qnorm(1-beta/2)/sqrt(ts[i]))
         }
         if (opt=="Gamma"){
-          gamma=param
+          gamma=-(param)
           alpha1[i+1]=alpha*(1-exp(gamma*(ts[i])))/(1-exp(gamma))
           beta1[i+1]=beta*(1-exp(gamma*(ts[i])))/(1-exp(gamma))
         }
@@ -172,7 +172,7 @@ FutIM<-function(d2,dmax,last.look,d1,etam,alpha,beta,opt,param){
         beta1[i+1]=2-2*pnorm(qnorm(1-beta/2)/sqrt(ts[i]))
       }
       if (opt=="Gamma") {
-        gamma=param
+        gamma=-(param)
         alpha1[i+1]=alpha*(1-exp(gamma*(ts[i])))/(1-exp(gamma))
         beta1[i+1]=beta*(1-exp(gamma*(ts[i])))/(1-exp(gamma))
       }

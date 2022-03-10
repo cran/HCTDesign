@@ -65,7 +65,7 @@ findboundDE<-function(d2,d1,alpha,beta,k,option,param){
     etam=(eta0+eta1)/2
     betaK<-mvtnorm::pmvnorm(lower = c(rep(-Inf,length(ub))),upper = c(ub),mean = etam*sqrt(ts[1:(length(ti))]),sigma = covmatrix[2:(length(ti)+1),2:(length(ti)+1)])[1]
     if (betaK<beta) {eta1=etam} else {eta0=etam}
-    if (abs(beta-betaK)<1e-05) {flag2=1} else{print(abs(beta-betaK)<1e-05)}
+    if (abs(beta-betaK)<1e-05) {flag2=1}
     if(flag2==1) {break}
   }
   ans=list(lower=ub[length(ub)],upper=ub,etam=round(etam,4), ts=round(ts,4),flag,
