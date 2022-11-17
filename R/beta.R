@@ -89,17 +89,20 @@ findboundDF<-function(d2,d1,alpha,beta,k,option,param){
 #' @param alpha type I error.
 #' @param beta type II error.
 #' @param delta hazard ratio: hazard of experiment group over hazard of control group.
+#' @param delta0 Non-inferiority margin.
 #' @param d1 total number of events in the historical control group.
 #' @param option type of spending function: "OBF", "Gamma", "Rho" or "Pocock". Default is "OBF.
 #' @param param Parameter for Gamma family or Rho family. Default value is 4.
+#' @param trial Type of trial: "Superiority" or "Non-inferiority". Default is "Superiority".
 #' @author  Tushar Patni, Yimei Li, Jianrong Wu, and Arzu Onar-Thomas.
 #' @return List of dataframes and vectors containing the details about the following: design of the trial which includes the number of looks and events;
 #' details about futility and efficacy boundaries which include transformed information time at each look, cumulative beta and alpha respectively, p-values and crossing probabilities;
 #' etam(drift parameter); d2max(maximum number of events in the experimental group); delta_used(hazard ratio used in the design).
 #' @examples
-#' #Sequential trial for three equally spaced looks for OBF spending function.
-#' gg<-FutDesign(k=c(0.33333,0.66667,1),alpha=0.05,beta=0.1,delta=1/1.75,d1=65,option="OBF")
+#' #Sequential superiority trial for three equally spaced looks for OBF spending function.
+#' gg<-FutDesign(k=c(0.3,0.6,1),alpha=0.05,beta=0.1,delta=0.57,d1=65,option="OBF",trial="Superiority")
 #' @import stats
+#' @import crayon
 #' @references
 #' \insertRef{doi:10.1002/pst.1756}{HCTDesign}
 #' @references
@@ -109,41 +112,67 @@ findboundDF<-function(d2,d1,alpha,beta,k,option,param){
 #' @export
 
 
-FutDesign<-function(k, alpha, beta, delta, d1, option,param){
+FutDesign<-function(k, alpha, beta, delta, d1, option,param,trial,delta0){
+  intdelt<-delta
+  j<-0
   while(d1>0) {
-    temp1=exp(sqrt(1/d1*(qnorm(1-alpha)+qnorm(1-beta))^2))
-    temp2=exp(-sqrt(1/d1*(qnorm(1-alpha)+qnorm(1-beta))^2))
-    if (delta<temp1 & delta>temp2) {
-      delta<-ifelse(floor(delta)==1,temp1+0.001,temp2-0.001)
+    if (trial=="Superiority"){
+      temp1=round(exp(sqrt(1/d1*(qnorm(1-alpha)+qnorm(1-beta))^2)),2)
+      temp2=round(exp(-sqrt(1/d1*(qnorm(1-alpha)+qnorm(1-beta))^2)),2)
     }
 
-    d2start=ceiling((log(delta)^2/(qnorm(1-alpha)+qnorm(1-beta))^2-1/d1)^(-1))
-    if(d2start<0 & delta==ifelse(floor(delta)==1,temp1,temp2)){
-      delta<-ifelse(floor(delta)==1,delta+0.001,delta-0.001)
-      d2start=ceiling((log(delta)^2/(qnorm(1-alpha)+qnorm(1-beta))^2-1/d1)^(-1))}
+    else if (trial=="Non-inferiority") {
+      temp1=round(exp(sqrt(1/d1*(qnorm(1-alpha)+qnorm(1-beta))^2))*delta0,2)
+      temp2=round(exp(-sqrt(1/d1*(qnorm(1-alpha)+qnorm(1-beta))^2))*delta0,2)  }
+
+    else{stop("Choose from Superiority or Non-inferiority")}
+
+
+    if (delta<=temp1 & delta>=temp2) {
+      delta<-ifelse(floor(delta)==1,temp1+0.01,temp2-0.01)
+    }
+
+    if (trial=="Superiority"){d2start=ceiling((log(delta)^2/(qnorm(1-alpha)+qnorm(1-beta))^2-1/d1)^(-1))}
+    else if(trial=="Non-inferiority") {d2start=ceiling(((log(delta)-log(delta0))^2/(qnorm(1-alpha)+qnorm(1-beta))^2-1/d1)^(-1))}
+
+    #if(d2start<0 & delta==ifelse(floor(delta)==1,temp1,temp2)){
+     # delta<-ifelse(floor(delta)==1,delta+0.001,delta-0.001)
+      #d2start=ceiling((log(delta)^2/(qnorm(1-alpha)+qnorm(1-beta))^2-1/d1)^(-1))}
+
     find=findboundDF(d2=d2start,d1=d1,alpha=alpha, beta=beta,k=k,
                    option=option,param=param)
     etam=find$etam
-    temp1=round(exp(sqrt(1/d1*(etam)^2)),3)
-    temp2=round(exp(-sqrt(1/d1*(etam)^2)),3)
-    if (delta<temp1 & delta>temp2) {
-      delta<-ifelse(floor(delta)==1,temp1+0.001,temp2-0.001)
-    }
+
     ctn=0
     conv<-0
     repeat{
       ctn=ctn+1
-      d2=ceiling(1/(log(delta)^2/etam^2-1/d1))
-      if(d2<0 & delta==ifelse(floor(delta)==1,temp1,temp2)){
-        delta<-ifelse(floor(delta)==1,delta+0.001,delta-0.001)
-        d2=ceiling(1/(log(delta)^2/etam^2-1/d1))}
+
+      if (trial=="Superiority"){
+        temp1=round(exp(sqrt(1/d1*(etam)^2)),2)
+        temp2=round(exp(-sqrt(1/d1*(etam)^2)),2)
+      }
+      else if (trial=="Non-inferiority"){
+        temp1=round(exp(sqrt(1/d1*(etam)^2))*delta0,2)
+        temp2=round(exp(-sqrt(1/d1*(etam)^2))*delta0,2)
+      }
+
+      if (delta<=temp1 & delta>=temp2) {
+        delta<-ifelse(floor(delta)>=1,temp1+0.01,temp2-0.01)
+      }
+
+      if (trial=="Superiority"){d2=ceiling(1/(log(delta)^2/etam^2-1/d1))}
+      else if (trial=="Non-inferiority"){d2=ceiling(1/((log(delta)-log(delta0))^2/etam^2-1/d1))}
+
+
       find=findboundDF(d2=d2,d1=d1,alpha=alpha, beta=beta,k=k,option=option,param=param)
       etam=find$etam
-      temp1=round(exp(sqrt(1/d1*(etam)^2)),3)
-      temp2=round(exp(-sqrt(1/d1*(etam)^2)),3)
-      if (delta<temp1 & delta>temp2) {
-        delta<-ifelse(floor(delta)==1,temp1+0.001,temp2-0.001)
-      }
+      #temp1=round(exp(sqrt(1/d1*(etam)^2)),3)
+      #temp2=round(exp(-sqrt(1/d1*(etam)^2)),3)
+      #if (delta<temp1 & delta>temp2) {
+       # delta<-ifelse(floor(delta)==1,temp1+0.001,temp2-0.001)
+      #}
+
       lb=find$lower
       ub=find$upper
       ts=find$ts
@@ -155,11 +184,15 @@ FutDesign<-function(k, alpha, beta, delta, d1, option,param){
       }
       else{
         q<-d2
+        conv<-1
       }
-      if (conv>5){break}
+      if (conv>=5){break}
       if (ctn>50) {break}}
-    if (conv>5){break}
-    else {delta<-ifelse(floor(delta)==1,delta+0.01,delta-0.01)}
+    if (conv>=5){break}
+    else {
+      j<-j+1
+      if(j>=3){stop("Use different value of Hazard ratio")}
+      delta<-ifelse(floor(delta)==1,delta+0.01,delta-0.01)}
   }
 
   lb=round(lb,3)
@@ -179,12 +212,16 @@ FutDesign<-function(k, alpha, beta, delta, d1, option,param){
     k2[i]<-pnorm(lb[i],lower.tail = F)
   }
 
+  if(intdelt!=delta){cat(red$bold(paste("The final delta used for the design is",delta)))
+    cat("\n\n")
+  }
+
   ans=list(Design=data.frame(Looks=1:length(ts),Events=round(d2*k)),Efficacy=data.frame("Information time"=round(ts[length(ts)],4),"Cumulative alpha spent"=find$alpha,"Efficacy boundary in z-score scale"=ub[1],
                                                                                         "Efficacy boundary in p-value scale"=k1,"Boundary crossing probability"=p1,check.names = F),
            Futility=data.frame("Information time"=round(ts,4),
-                               "Cumulative beta spent"=find$beta,"Futility boundary in z-score scale"=lb,"Futility boundary in p-value scale"=k2,"Boundary crossing probability"=p2,check.names = F),etam=etam,d2max=d2,delta_used=delta)
+                               "Cumulative beta spent"=find$beta,"Futility boundary in z-score scale"=lb,"Futility boundary in p-value scale"=k2,"Boundary crossing probability"=p2,check.names = F),etam=etam,d2max=d2,delta_used=delta,trial=trial)
 
   return(ans)}
 
-FutDesign<-set.defaults(FutDesign,option="OBF",param=4)
+FutDesign<-set.defaults(FutDesign,option="OBF",param=4,trial="Superiority")
 #################################################################

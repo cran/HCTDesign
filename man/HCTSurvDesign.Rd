@@ -4,7 +4,17 @@
 \alias{HCTSurvDesign}
 \title{HCT design with interim monitoring for both efficacy and futility}
 \usage{
-HCTSurvDesign(k, alpha, beta, delta, d1, option = "OBF", param = 4)
+HCTSurvDesign(
+  k,
+  alpha,
+  beta,
+  delta,
+  d1,
+  option = "OBF",
+  param = 4,
+  trial = "Superiority",
+  delta0
+)
 }
 \arguments{
 \item{k}{vector of time fraction for all planned looks: k=c(1/3,2/3,1) if the three planned looks will be carried out at 1/3, 2/3 and all of the total events in the experiment arm.}
@@ -20,6 +30,10 @@ HCTSurvDesign(k, alpha, beta, delta, d1, option = "OBF", param = 4)
 \item{option}{type of spending function: "OBF", "Gamma", "Rho" or "Pocock". Default is "OBF".}
 
 \item{param}{Parameter for Gamma family or Rho family. Default value is 4.}
+
+\item{trial}{Type of trial: "Superiority" or "Non-inferiority". Default is "Superiority".}
+
+\item{delta0}{Non-inferiority margin.}
 }
 \value{
 List of dataframes and vectors containing the details about the following: design of the trial which includes the number of looks and events;
@@ -30,8 +44,8 @@ etam(drift parameter); d2max(maximum number of events in the experimental group)
 The group sequential design for historical controlled survival outcome trials with both efficacy and futility boundaries.
 }
 \examples{
-#Sequential trial for three equally spaced looks for OBF spending function.
-gg<-HCTSurvDesign(k=c(0.33333,0.66667,1),alpha=0.05,beta=0.1,delta=1/1.75,d1=65,option="OBF")
+#Sequential superiority trial for three equally spaced looks for OBF spending function.
+gg<-HCTSurvDesign(k=c(0.3,0.6,1),alpha=0.05,beta=0.1,delta=0.57,d1=65,option="OBF")
 }
 \references{
 \insertRef{doi:10.1002/pst.1756}{HCTDesign}

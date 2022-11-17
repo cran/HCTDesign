@@ -4,7 +4,17 @@
 \alias{EffDesign}
 \title{HCT design with interim monitoring for efficacy only}
 \usage{
-EffDesign(k, alpha, beta, delta, d1, option = "OBF", param = 4)
+EffDesign(
+  k,
+  alpha,
+  beta,
+  delta,
+  delta0,
+  d1,
+  option = "OBF",
+  param = 4,
+  trial = "Superiority"
+)
 }
 \arguments{
 \item{k}{vector of time fraction for all planned looks: k=c(1/3,2/3,1) if the three planned looks will be carried out at 1/3, 2/3 and all of the total events in the experiment arm.}
@@ -15,11 +25,15 @@ EffDesign(k, alpha, beta, delta, d1, option = "OBF", param = 4)
 
 \item{delta}{hazard ratio: hazard of experiment group over hazard of control group.}
 
+\item{delta0}{Non-inferiority margin.}
+
 \item{d1}{total number of events in the historical control group.}
 
 \item{option}{type of spending function: "OBF", "Gamma", "Rho" or "Pocock". Default is "OBF.}
 
 \item{param}{Parameter for Gamma family or Rho family. Default value is 4.}
+
+\item{trial}{Type of trial: "Superiority" or "Non-inferiority". Default is "Superiority".}
 }
 \value{
 List of dataframes and vectors containing the details about the following: design of the trial which includes the number of looks and events;
@@ -30,10 +44,8 @@ etam(drift parameter); d2max(maximum number of events in the experimental group)
 The group sequential design for historical controlled survival outcome trials with efficacy boundaries only.
 }
 \examples{
-#HCT trial design with three equally spaced looks for efficacy only using OBF spending function.
-gg<-EffDesign(k=c(0.33333,0.66667,1),alpha=0.05,beta=0.1,delta=1/1.75,d1=65,option="OBF")
-#HCT trial design with three unequal spaced looks using Gamma spending function with parameter -1.
-gg<-EffDesign(k=c(0.5,0.75,1),alpha=0.05,beta=0.1,delta=0.5,d1=23, option="Gamma", param=1)
+#Superiority trial with three equally spaced looks for efficacy using OBF spending function.
+gg<-EffDesign(k=c(0.3,0.6,1),alpha=0.05,beta=0.1,delta=0.57,d1=65,option="OBF",trial="Superiority")
 }
 \references{
 \insertRef{doi:10.1002/pst.1756}{HCTDesign}
