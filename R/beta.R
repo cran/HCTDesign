@@ -94,7 +94,7 @@ findboundDF<-function(d2,d1,alpha,beta,k,option,param){
 #' @param option type of spending function: "OBF", "Gamma", "Rho" or "Pocock". Default is "OBF.
 #' @param param Parameter for Gamma family or Rho family. Default value is 4.
 #' @param trial Type of trial: "Superiority" or "Non-inferiority". Default is "Superiority".
-#' @author  Tushar Patni, Yimei Li, Jianrong Wu, and Arzu Onar-Thomas.
+#' @author  Tushar Patni, Yimei Li and Jianrong Wu.
 #' @return List of dataframes and vectors containing the details about the following: design of the trial which includes the number of looks and events;
 #' details about futility and efficacy boundaries which include transformed information time at each look, cumulative beta and alpha respectively, p-values and crossing probabilities;
 #' etam(drift parameter); d2max(maximum number of events in the experimental group); delta_used(hazard ratio used in the design).
@@ -199,11 +199,16 @@ FutDesign<-function(k, alpha, beta, delta, d1, option,param,trial,delta0){
   ub=round(ub,3)
   p1<-NULL
   p2<-NULL
+  l1<-NULL
+  l2<-NULL
   p1[1]<-pnorm(ub[1],lower.tail = F)
+  l1[1]<-pnorm(ub[1],lower.tail = F,mean =etam*sqrt(ts[length(ts)]))
   p2[1]<-pnorm(lb[1],mean = etam*sqrt(ts[1]))
+  l2[1]<-pnorm(lb[1])
   for (i in 2:length(lb)){
     #p1[i]<-mvtnorm::pmvnorm(lower=c(lb[1:i-1],ub[i]),upper=c(ub[1:i-1],Inf),sigma=find$sig[2:(i+1),2:(i+1)])[1]
     p2[i]<-mvtnorm::pmvnorm(lower=c(lb[1:(i-1)],-Inf),upper=c(rep(Inf,length(lb[1:(i-1)])),lb[i]),sigma=find$sig[2:(i+1),2:(i+1)],mean = etam*sqrt(ts[1:i]))[1]
+    l2[i]<-mvtnorm::pmvnorm(lower=c(lb[1:(i-1)],-Inf),upper=c(rep(Inf,length(lb[1:(i-1)])),lb[i]),sigma=find$sig[2:(i+1),2:(i+1)])[1]
   }
   k1<-pnorm(ub[1],lower.tail = F)
   k2<-NULL
@@ -217,9 +222,9 @@ FutDesign<-function(k, alpha, beta, delta, d1, option,param,trial,delta0){
   }
 
   ans=list(Design=data.frame(Looks=1:length(ts),Events=round(d2*k)),Efficacy=data.frame("Information time"=round(ts[length(ts)],4),"Cumulative alpha spent"=find$alpha,"Efficacy boundary in z-score scale"=ub[1],
-                                                                                        "Efficacy boundary in p-value scale"=k1,"Boundary crossing probability"=p1,check.names = F),
+                                                                                        "Efficacy boundary in p-value scale"=k1,"Boundary crossing probability under H0"=p1,check.names = F),
            Futility=data.frame("Information time"=round(ts,4),
-                               "Cumulative beta spent"=find$beta,"Futility boundary in z-score scale"=lb,"Futility boundary in p-value scale"=k2,"Boundary crossing probability"=p2,check.names = F),etam=etam,d2max=d2,delta_used=delta,trial=trial)
+                               "Cumulative beta spent"=find$beta,"Futility boundary in z-score scale"=lb,"Futility boundary in p-value scale"=k2,"Boundary crossing probability under H0"=l2,"Boundary crossing probability under H1"=p2,check.names = F),etam=etam,d2max=d2,delta_used=delta,trial=trial)
 
   return(ans)}
 

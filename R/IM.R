@@ -11,7 +11,7 @@
 #' @param opt type of spending function: "OBF", "Gamma", "Rho" or "Pocock". Default is "OBF".
 #' @param param Parameter for Gamma family or Rho family. Default value is 4.
 #' @param etam value of the drift parameter obtained from design function.
-#' @author Tushar Patni, Yimei Li, Jianrong Wu, and Arzu Onar-Thomas.
+#' @author Tushar Patni, Yimei Li and Jianrong Wu.
 #' @return A list containing efficacy and futility boundary values along with the p-values and transformed information time for the current look. Post-hoc power is also calculated in case of early stopping of the trial.
 #' @examples
 #' #Interim look for the trial when the number of events is 13(first look).

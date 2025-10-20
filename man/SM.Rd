@@ -4,7 +4,7 @@
 \alias{SM}
 \title{Sample size in terms of number of subjects in the experimental group}
 \usage{
-SM(time, event, d2max, opt = "KM", event_ind, ta, tf, delta)
+SM(time, event, d2max, opt = c("KM"), event_ind, ta, tf, delta)
 }
 \arguments{
 \item{time}{event time vector from person level historical control data.}
@@ -13,7 +13,7 @@ SM(time, event, d2max, opt = "KM", event_ind, ta, tf, delta)
 
 \item{d2max}{maximum number of events in the experimental group calculated from the design function.}
 
-\item{opt}{the method of fitting survival curve-"log_normal" or "KM" (log-normal or Kaplan Meier). Default is "KM".}
+\item{opt}{the method of fitting survival curve-"log_normal", "exponential or "KM" (log-normal, exponential or Kaplan Meier). Default is "KM".}
 
 \item{event_ind}{numeric value indicating the occurrence of event.}
 
@@ -41,5 +41,5 @@ gg<-SM(time,event,d2max,opt="log_normal",ta=4,tf=3,delta=0.57,event_ind=1)
 \insertRef{doi:10.1080/10543406.2019.1684305}{HCTDesign}
 }
 \author{
-Tushar Patni, Yimei Li, Jianrong Wu, and Arzu Onar-Thomas.
+Tushar Patni, Yimei Li and Jianrong Wu.
 }

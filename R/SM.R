@@ -4,12 +4,12 @@
 #' @param time event time vector from person level historical control data.
 #' @param event numeric vector indicating the status of event from person level historical control data.
 #' @param d2max maximum number of events in the experimental group calculated from the design function.
-#' @param opt the method of fitting survival curve-"log_normal" or "KM" (log-normal or Kaplan Meier). Default is "KM".
+#' @param opt the method of fitting survival curve-"log_normal", "exponential or "KM" (log-normal, exponential or Kaplan Meier). Default is "KM".
 #' @param event_ind numeric value indicating the occurrence of event.
 #' @param delta hazard ratio.
 #' @param ta enrollment time.
 #' @param tf follow-up time.
-#' @author Tushar Patni, Yimei Li, Jianrong Wu, and Arzu Onar-Thomas.
+#' @author Tushar Patni, Yimei Li and Jianrong Wu.
 #' @return  Returns the value of sample size.
 #' @examples
 #' time<-c(20,65,12,50,58,65,45,44)
@@ -17,7 +17,7 @@
 #' d2max=57
 #' gg<-SM(time,event,d2max,opt="log_normal",ta=4,tf=3,delta=0.57,event_ind=1)
 #' @import stats
-#' @importFrom survival Surv survfit
+#' @importFrom survival Surv survfit survreg
 #' @importFrom flexsurv flexsurvreg
 #' @references
 #' \insertRef{doi:10.1002/pst.1756}{HCTDesign}
@@ -28,7 +28,10 @@
 #' @export
 
 
-SM<-function(time,event,d2max,opt,event_ind,ta,tf,delta) {
+SM<-function(time,event,d2max,opt=c("KM"),event_ind,ta,tf,delta) {
+  opt <- match.arg(opt, c("KM", "exponential", "log_normal"))
+
+
   if (opt=="log_normal") {
     s1<-Surv(time, event == event_ind)
     model<-flexsurvreg(s1 ~ 1, dist="lognormal" ) # fit the log-normal model #
@@ -62,12 +65,26 @@ SM<-function(time,event,d2max,opt,event_ind,ta,tf,delta) {
     p1=1-b1/ta
     samplesize=ceiling(d2max/p1)
   }
+  else{
+    mod<-survreg(Surv(time, event==event_ind) ~ 1, dist="exponential")
+    lambda<-exp(-mod$coefficients)
+    S1=function(t){
+      ans=exp(-lambda*t)
+      return(ans)   ### historical control distribution
+    }
+    S2=function(t){
+      ans=S1(t)^(delta)
+      return(ans)
+    }
+    p1=1-1/ta*integrate(S2,tf,tf+ta)$value
+    samplesize=ceiling(d2max/p1)
+  }
 
   return(data.frame(Samplesize=samplesize))
 
 }
 
-SM<-set.defaults(SM,opt="KM")
+#SM<-set.defaults(SM,opt="KM")
 ############################################
 
 

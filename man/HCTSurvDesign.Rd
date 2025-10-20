@@ -53,5 +53,5 @@ gg<-HCTSurvDesign(k=c(0.3,0.6,1),alpha=0.05,beta=0.1,delta=0.57,d1=65,option="OB
 \insertRef{doi:10.1080/10543406.2019.1684305}{HCTDesign}
 }
 \author{
-Tushar Patni, Yimei Li, Jianrong Wu, and Arzu Onar-Thomas.
+Tushar Patni, Yimei Li and Jianrong Wu.
 }

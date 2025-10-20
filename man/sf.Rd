@@ -32,5 +32,5 @@ group<-c(rep("exp",4),rep("cont",4))
 gg<-sf(event=time,status=event,delta0=1.3,group=group,experiment="exp",control="cont")
 }
 \author{
-Tushar Patni, Yimei Li, Jianrong Wu, and Arzu Onar-Thomas.
+Tushar Patni, Yimei Li and Jianrong Wu.
 }

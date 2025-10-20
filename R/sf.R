@@ -6,7 +6,7 @@
 #' @param group group string vector indicating the assignment of patients into control or experimental group.
 #' @param experiment name of experimental group as character string.
 #' @param control name of control group as character string.
-#' @author Tushar Patni, Yimei Li, Jianrong Wu, and Arzu Onar-Thomas.
+#' @author Tushar Patni, Yimei Li and Jianrong Wu.
 #' @return  Returns the value of score statistic.
 #' @examples
 #' time<-c(20,65,12,50,58,65,45,44)

@@ -56,5 +56,5 @@ gg<-FutIM(c(13,35),dmax=57,alpha=0.05,beta=0.1,etam=3.0726,d1=65,opt="OBF",last.
 \insertRef{doi:10.1080/10543406.2019.1684305}{HCTDesign}
 }
 \author{
-Tushar Patni, Yimei Li, Jianrong Wu, and Arzu Onar-Thomas.
+Tushar Patni, Yimei Li and Jianrong Wu.
 }
